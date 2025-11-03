@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beyonder API Frontend</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin-bottom: 30px; border: 1px solid #ccc; padding: 20px; }
+        input, button { margin: 5px; padding: 8px; }
+        #response { white-space: pre-wrap; background: #f9f9f9; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Beyonder API Frontend</h1>
+
+    <div class="section">
+        <h2>Signup</h2>
+        <input type="email" id="signup-email" placeholder="Email">
+        <input type="text" id="signup-name" placeholder="Name">
+        <input type="password" id="signup-password" placeholder="Password">
+        <button onclick="signup()">Signup</button>
+    </div>
+
+    <div class="section">
+        <h2>Login</h2>
+        <input type="email" id="login-email" placeholder="Email">
+        <input type="password" id="login-password" placeholder="Password">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <div class="section">
+        <h2>Profile</h2>
+        <button onclick="getProfile()">Get Profile</button>
+        <input type="text" id="profile-bio" placeholder="Bio">
+        <input type="file" id="profile-photo">
+        <button onclick="updateProfile()">Update Profile</button>
+    </div>
+
+    <div class="section">
+        <h2>Report Submission</h2>
+        <input type="file" id="report-image">
+        <input type="text" id="report-description" placeholder="Description">
+        <input type="number" step="any" id="report-latitude" placeholder="Latitude">
+        <input type="number" step="any" id="report-longitude" placeholder="Longitude">
+        <button onclick="submitReport()">Submit Report</button>
+    </div>
+
+    <div class="section">
+        <h2>Chatbot</h2>
+        <input type="text" id="chat-message" placeholder="Message">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <div class="section">
+        <h2>Response</h2>
+        <div id="response"></div>
+    </div>
+
+    <script>
+        let accessToken = localStorage.getItem('accessToken');
+
+        function setResponse(text) {
+            document.getElementById('response').textContent = text;
+        }
+
+        async function signup() {
+            const email = document.getElementById('signup-email').value;
+            const name = document.getElementById('signup-name').value;
+            const password = document.getElementById('signup-password').value;
+            const response = await fetch('/api/signup/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, name, password })
+            });
+            const data = await response.json();
+            setResponse(JSON.stringify(data, null, 2));
+            if (data.access) {
+                accessToken = data.access;
+                localStorage.setItem('accessToken', accessToken);
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const response = await fetch('/api/login/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await response.json();
+            setResponse(JSON.stringify(data, null, 2));
+            if (data.access) {
+                accessToken = data.access;
+                localStorage.setItem('accessToken', accessToken);
+            }
+        }
+
+        async function getProfile() {
+            if (!accessToken) return setResponse('Please login first');
+            const response = await fetch('/api/profile/', {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            const data = await response.json();
+            setResponse(JSON.stringify(data, null, 2));
+            // Display name from profile
+            if (data.user && data.user.name) {
+                alert(`Welcome, ${data.user.name}!`);
+            }
+        }
+
+        async function updateProfile() {
+            if (!accessToken) return setResponse('Please login first');
+            const bio = document.getElementById('profile-bio').value;
+            const photo = document.getElementById('profile-photo').files[0];
+            const formData = new FormData();
+            formData.append('bio', bio);
+            if (photo) formData.append('photo', photo);
+            const response = await fetch('/api/profile/', {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+                body: formData
+            });
+            const data = await response.json();
+            setResponse(JSON.stringify(data, null, 2));
+        }
+
+        async function submitReport() {
+            if (!accessToken) return setResponse('Please login first');
+            const image = document.getElementById('report-image').files[0];
+            const description = document.getElementById('report-description').value;
+            const latitude = document.getElementById('report-latitude').value;
+            const longitude = document.getElementById('report-longitude').value;
+            const formData = new FormData();
+            formData.append('image', image);
+            formData.append('description', description);
+            formData.append('latitude', latitude);
+            formData.append('longitude', longitude);
+            const response = await fetch('/api/reports/', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${accessToken}` },
+                body: formData
+            });
+            const data = await response.json();
+            setResponse(JSON.stringify(data, null, 2));
+        }
+
+        async function sendMessage() {
+            if (!accessToken) return setResponse('Please login first');
+            const message = document.getElementById('chat-message').value;
+            const response = await fetch('/api/chatbot/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message })
+            });
+            const data = await response.json();
+            setResponse(JSON.stringify(data, null, 2));
+        }
+    </script>
+</body>
+</html>

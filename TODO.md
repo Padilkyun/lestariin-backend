@@ -1,0 +1,3 @@
+- [x] Update backend/settings.py to add SECURE_PROXY_SSL_HEADER for ngrok HTTPS handling
+- [x] Add try-except in ReportView.post to return JSON errors instead of HTML
+- [x] Attempted to test with ngrok, but failed due to account limit (1 simultaneous session). Recommend upgrading ngrok plan or testing locally.

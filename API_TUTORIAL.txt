@@ -1,0 +1,537 @@
+API Usage Tutorial for Backend Beyonder
+
+This file provides detailed step-by-step guides on how to use each API endpoint in the Backend Beyonder project.
+All examples assume the server is running at http://127.0.0.1:8000/. Replace with your ngrok URL if using public access.
+
+Prerequisites:
+- Django server running at http://127.0.0.1:8000/
+- HTTP client like Postman, curl, or requests library
+- For authenticated endpoints, obtain JWT access token from login/signup
+
+================================================================================
+1. USER REGISTRATION (SIGNUP)
+================================================================================
+
+Endpoint: POST /api/signup/
+
+Description: Create a new user account.
+
+Request:
+- Method: POST
+- URL: http://127.0.0.1:8000/api/signup/
+- Headers:
+  - Content-Type: application/json
+- Body (JSON):
+  {
+    "email": "user@example.com",
+    "name": "User Name",
+    "password": "password123"
+  }
+
+Example using curl:
+curl -X POST http://127.0.0.1:8000/api/signup/ \
+-H "Content-Type: application/json" \
+-d '{"email": "user@example.com", "name": "User Name", "password": "password123"}'
+
+Response (Success - 201 Created):
+{
+  "user": {
+    "email": "user@example.com",
+    "name": "User Name"
+  },
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+
+Response (Error - 400 Bad Request):
+{
+  "email": ["This field is required."],
+  "password": ["This field may not be blank."]
+}
+
+================================================================================
+2. GENERAL LOGIN
+================================================================================
+
+Endpoint: POST /api/login/
+
+Description: Authenticate any user (admin or regular) and obtain JWT tokens.
+
+Request:
+- Method: POST
+- URL: http://127.0.0.1:8000/api/login/
+- Headers:
+  - Content-Type: application/json
+- Body (JSON):
+  {
+    "email": "user@example.com",
+    "password": "password123"
+  }
+
+Example using curl:
+curl -X POST http://127.0.0.1:8000/api/login/ \
+-H "Content-Type: application/json" \
+-d '{"email": "user@example.com", "password": "password123"}'
+
+Response (Success - 200 OK):
+{
+  "user": {
+    "email": "user@example.com",
+    "name": "User Name"
+  },
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+
+Response (Error - 400 Bad Request):
+{
+  "non_field_errors": ["Unable to log in with provided credentials."]
+}
+
+================================================================================
+3. ADMIN LOGIN
+================================================================================
+
+Endpoint: POST /api/admin/login/
+
+Description: Login specifically for admin users (staff or superuser only).
+
+Request:
+- Method: POST
+- URL: http://127.0.0.1:8000/api/admin/login/
+- Headers:
+  - Content-Type: application/json
+- Body (JSON):
+  {
+    "email": "admin@example.com",
+    "password": "password123"
+  }
+
+Example using curl:
+curl -X POST http://127.0.0.1:8000/api/admin/login/ \
+-H "Content-Type: application/json" \
+-d '{"email": "admin@example.com", "password": "password123"}'
+
+Response (Success - 200 OK):
+{
+  "user": {
+    "email": "admin@example.com",
+    "name": "Admin User"
+  },
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+
+Response (Error - 400 Bad Request):
+{
+  "non_field_errors": ["Unable to log in with provided credentials."]
+}
+Note: Only users with is_staff=True or is_superuser=True can login here.
+
+================================================================================
+4. USER LOGIN
+================================================================================
+
+Endpoint: POST /api/user/login/
+
+Description: Login specifically for regular users (non-admin).
+
+Request:
+- Method: POST
+- URL: http://127.0.0.1:8000/api/user/login/
+- Headers:
+  - Content-Type: application/json
+- Body (JSON):
+  {
+    "email": "user@example.com",
+    "password": "password123"
+  }
+
+Example using curl:
+curl -X POST http://127.0.0.1:8000/api/user/login/ \
+-H "Content-Type: application/json" \
+-d '{"email": "user@example.com", "password": "password123"}'
+
+Response (Success - 200 OK):
+{
+  "user": {
+    "email": "user@example.com",
+    "name": "User Name"
+  },
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+
+Response (Error - 400 Bad Request):
+{
+  "non_field_errors": ["Unable to log in with provided credentials."]
+}
+Note: Admin users cannot login via this endpoint.
+
+================================================================================
+5. GET PROFILE
+================================================================================
+
+Endpoint: GET /api/profile/
+
+Description: Retrieve the authenticated user's profile information.
+
+Request:
+- Method: GET
+- URL: http://127.0.0.1:8000/api/profile/
+- Headers:
+  - Authorization: Bearer <access_token>
+
+Example using curl:
+curl -X GET http://127.0.0.1:8000/api/profile/ \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+Response (Success - 200 OK):
+{
+  "id": 1,
+  "user": {
+    "email": "user@example.com",
+    "name": "User Name"
+  },
+  "bio": "I love the environment!",
+  "photo": "http://127.0.0.1:8000/media/profile_photos/photo.jpg"
+}
+
+Response (Error - 401 Unauthorized):
+{
+  "detail": "Authentication credentials were not provided."
+}
+
+================================================================================
+6. UPDATE PROFILE
+================================================================================
+
+Endpoint: PUT /api/profile/
+
+Description: Update the authenticated user's profile, including bio and photo.
+
+Request:
+- Method: PUT
+- URL: http://127.0.0.1:8000/api/profile/
+- Headers:
+  - Authorization: Bearer <access_token>
+  - Content-Type: multipart/form-data (for photo upload)
+- Body (Form Data):
+  - bio: "Updated bio text"
+  - photo: [Select file from your computer]
+
+Example using curl (text-only update):
+curl -X PUT http://127.0.0.1:8000/api/profile/ \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+-H "Content-Type: application/json" \
+-d '{"bio": "Updated bio"}'
+
+Example using curl (with photo upload):
+curl -X PUT http://127.0.0.1:8000/api/profile/ \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+-F "bio=Updated bio with photo" \
+-F "photo=@/path/to/your/photo.jpg"
+
+Response (Success - 200 OK):
+{
+  "id": 1,
+  "user": {
+    "email": "user@example.com",
+    "name": "User Name"
+  },
+  "bio": "Updated bio with photo",
+  "photo": "http://127.0.0.1:8000/media/profile_photos/photo.jpg"
+}
+
+================================================================================
+7. CHATBOT INTERACTION
+================================================================================
+
+Endpoint: POST /api/chatbot/
+
+Description: Send a message to the Beyonder chatbot (environmental topics only).
+
+Request:
+- Method: POST
+- URL: http://127.0.0.1:8000/api/chatbot/
+- Headers:
+  - Authorization: Bearer <access_token>
+  - Content-Type: application/json
+- Body (JSON):
+  {
+    "message": "What are the effects of climate change on oceans?"
+  }
+
+Example using curl:
+curl -X POST http://127.0.0.1:8000/api/chatbot/ \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+-H "Content-Type: application/json" \
+-d '{"message": "What are the effects of climate change on oceans?"}'
+
+Response (Success - 200 OK):
+{
+  "response": "Climate change affects oceans in several ways: rising sea temperatures, ocean acidification, sea level rise, and changes in marine ecosystems. These impacts can lead to coral bleaching, loss of biodiversity, and altered ocean currents."
+}
+
+Response (Error - 401 Unauthorized):
+{
+  "detail": "Authentication credentials were not provided."
+}
+
+Note: Chatbot restricts responses to environmental topics.
+
+================================================================================
+8. SUBMIT REPORT
+================================================================================
+
+Endpoint: POST /api/reports/
+
+Description: Submit a report with image, description, latitude, and longitude. Image is analyzed for environmental issues.
+
+Request:
+- Method: POST
+- URL: http://127.0.0.1:8000/api/reports/
+- Headers:
+  - Authorization: Bearer <access_token>
+  - Content-Type: multipart/form-data
+- Body (Form Data):
+  - image: [Select image file]
+  - description: "Report description"
+  - latitude: 12.345
+  - longitude: 67.890
+
+Example using curl:
+curl -X POST http://127.0.0.1:8000/api/reports/ \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+-F "image=@/path/to/image.jpg" \
+-F "description=Description of the report" \
+-F "latitude=12.345" \
+-F "longitude=67.890"
+
+Response (Success - 201 Created):
+{
+  "id": 1,
+  "image_url": "http://127.0.0.1:8000/media/report_images/image.jpg",
+  "description": "Description of the report",
+  "latitude": 12.345,
+  "longitude": 67.890,
+  "water_classification": "Air_bersih",
+  "forest_classification": "non_fire",
+  "public_fire_classification": "no_fire",
+  "trash_classification": "sedikit_sampah",
+  "illegal_logging_classification": "tidak_penebangan_liar",
+  "verified": false,
+  "created_at": "2023-10-01T12:00:00Z"
+}
+
+Note: Classifications may be null if not detected in the image/description.
+
+================================================================================
+9. GET ALL REPORTS
+================================================================================
+
+Endpoint: GET /api/reports/all/
+
+Description: Retrieve all reports (admin access recommended).
+
+Request:
+- Method: GET
+- URL: http://127.0.0.1:8000/api/reports/all/
+- Headers:
+  - Authorization: Bearer <access_token>
+
+Example using curl:
+curl -X GET http://127.0.0.1:8000/api/reports/all/ \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+Response (Success - 200 OK):
+[
+  {
+    "id": 1,
+    "image_url": "http://127.0.0.1:8000/media/report_images/image.jpg",
+    "description": "Description",
+    "latitude": 12.345,
+    "longitude": 67.890,
+    "water_classification": "Air_bersih",
+    "forest_classification": "non_fire",
+    "public_fire_classification": "no_fire",
+    "trash_classification": "sedikit_sampah",
+    "illegal_logging_classification": "tidak_penebangan_liar",
+    "verified": false,
+    "created_at": "2023-10-01T12:00:00Z",
+    "user": {
+      "email": "user@example.com",
+      "name": "User Name"
+    }
+  }
+]
+
+================================================================================
+10. GET USER'S REPORTS
+================================================================================
+
+Endpoint: GET /api/reports/user/
+
+Description: Retrieve reports submitted by the authenticated user.
+
+Request:
+- Method: GET
+- URL: http://127.0.0.1:8000/api/reports/user/
+- Headers:
+  - Authorization: Bearer <access_token>
+
+Example using curl:
+curl -X GET http://127.0.0.1:8000/api/reports/user/ \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+Response (Success - 200 OK):
+[
+  {
+    "id": 1,
+    "image_url": "http://127.0.0.1:8000/media/report_images/image.jpg",
+    "description": "Description",
+    "latitude": 12.345,
+    "longitude": 67.890,
+    "water_classification": "Air_bersih",
+    "forest_classification": "non_fire",
+    "public_fire_classification": "no_fire",
+    "trash_classification": "sedikit_sampah",
+    "illegal_logging_classification": "tidak_penebangan_liar",
+    "verified": false,
+    "created_at": "2023-10-01T12:00:00Z"
+  }
+]
+
+================================================================================
+11. VERIFY REPORT
+================================================================================
+
+Endpoint: POST /api/reports/verify/<int:report_id>/
+
+Description: Verify a report (admin only) and award 15 points to the user.
+
+Request:
+- Method: POST
+- URL: http://127.0.0.1:8000/api/reports/verify/1/ (replace 1 with actual report_id)
+- Headers:
+  - Authorization: Bearer <access_token> (admin token)
+
+Example using curl:
+curl -X POST http://127.0.0.1:8000/api/reports/verify/1/ \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+Response (Success - 200 OK):
+{
+  "message": "Report verified successfully. User awarded 15 points.",
+  "user_points": 15
+}
+
+Response (Error - 403 Forbidden):
+{
+  "error": "Only admins can verify reports."
+}
+
+Response (Error - 404 Not Found):
+{
+  "error": "Report not found."
+}
+
+================================================================================
+12. GET LEADERBOARD
+================================================================================
+
+Endpoint: GET /api/leaderboard/
+
+Description: Retrieve users ranked by points (descending).
+
+Request:
+- Method: GET
+- URL: http://127.0.0.1:8000/api/leaderboard/
+- Headers:
+  - Authorization: Bearer <access_token>
+
+Example using curl:
+curl -X GET http://127.0.0.1:8000/api/leaderboard/ \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+Response (Success - 200 OK):
+[
+  {
+    "email": "user1@example.com",
+    "name": "User One",
+    "points": 45
+  },
+  {
+    "email": "user2@example.com",
+    "name": "User Two",
+    "points": 30
+  }
+]
+
+================================================================================
+COMPLETE API FLOW EXAMPLE (Python requests)
+================================================================================
+
+import requests
+
+# 1. Signup
+signup_url = 'http://127.0.0.1:8000/api/signup/'
+signup_data = {
+    'email': 'newuser@example.com',
+    'name': 'New User',
+    'password': 'securepassword123'
+}
+response = requests.post(signup_url, json=signup_data)
+print('Signup:', response.json())
+
+# 2. Login
+login_url = 'http://127.0.0.1:8000/api/login/'
+login_data = {
+    'email': 'newuser@example.com',
+    'password': 'securepassword123'
+}
+response = requests.post(login_url, json=login_data)
+login_response = response.json()
+access_token = login_response['access']
+print('Login:', login_response)
+
+# 3. Get Profile
+profile_url = 'http://127.0.0.1:8000/api/profile/'
+headers = {'Authorization': f'Bearer {access_token}'}
+response = requests.get(profile_url, headers=headers)
+print('Profile:', response.json())
+
+# 4. Update Profile
+update_data = {'bio': 'I am passionate about environmental conservation!'}
+response = requests.put(profile_url, json=update_data, headers=headers)
+print('Updated Profile:', response.json())
+
+# 5. Chat with Bot
+chatbot_url = 'http://127.0.0.1:8000/api/chatbot/'
+chat_data = {'message': 'How can I reduce my carbon footprint?'}
+response = requests.post(chatbot_url, json=chat_data, headers=headers)
+print('Chatbot:', response.json())
+
+# 6. Submit Report (requires image file)
+reports_url = 'http://127.0.0.1:8000/api/reports/'
+with open('path/to/image.jpg', 'rb') as img:
+    files = {'image': img}
+    data = {
+        'description': 'Environmental issue report',
+        'latitude': 12.345,
+        'longitude': 67.890
+    }
+    response = requests.post(reports_url, headers=headers, files=files, data=data)
+print('Report Submission:', response.json())
+
+================================================================================
+NOTES
+================================================================================
+
+- All authenticated endpoints require the Authorization header with Bearer token.
+- Replace <access_token> with actual JWT access token from login/signup.
+- For multipart/form-data requests (profile update, report submission), use -F flags in curl or files/data in requests.
+- Classifications in reports may be null if not detected.
+- Admin endpoints require admin login.
+- Points are awarded only upon report verification by admin.
+- Chatbot responses are restricted to environmental topics.
